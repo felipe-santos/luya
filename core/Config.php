@@ -58,19 +58,21 @@ use luya\helpers\ArrayHelper;
  * return $config->toArray([Config::ENV_PROD]);
  * ```
  *
+ * ## Envs
+ *
  * Switching between envs can be usefull if certain configurations should only apply on a certain environment. Therefore you can add `env()` behind componenets, applications and modules.
  *
  * ```php
  * $config->component('db', [
  *     'class' => 'yii\db\Connection',
- *     'dsn' => 'mysql:host=localhost;dbname=prod_db',
+ *     'dsn' => 'mysql:host=localhost;dbname=local_db',
  *     'username' => 'foo',
  *     'password' => 'bar',
  * ])->env(Config::ENV_LOCAL);
  *
  * $config->component('db', [
  *     'class' => 'yii\db\Connection',
- *     'dsn' => 'mysql:host=localhost;dbname=prod_db',
+ *     'dsn' => 'mysql:host=localhost;dbname=dev_db',
  *     'username' => 'foo',
  *     'password' => 'bar',
  * ])->env(Config::ENV_DEV);
@@ -92,13 +94,30 @@ class Config
 {
     const ENV_ALL = 'all';
 
+    /**
+     * @var string Predefined constant for production
+     */
     const ENV_PROD = 'prod';
     
+    /**
+     * @var string Predefined constant for preproduction
+     */
     const ENV_PREP = 'prep';
     
+    /**
+     * @var string Predefined constant for development mode
+     */
     const ENV_DEV = 'dev';
     
+    /**
+     * @var string Predefined constant for local development
+     */
     const ENV_LOCAL = 'local';
+
+    /**
+     * @var string Predefined constant for ci enviroments
+     */
+    const ENV_CI = 'ci';
 
     const RUNTIME_ALL = 0;
 
@@ -152,7 +171,7 @@ class Config
      */
     public function application(array $config)
     {
-        return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_APPLICATIONS, md5(serialize($config)), $config));
+        return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_APPLICATIONS, 'application', $config));
     }
 
     /**
@@ -163,7 +182,7 @@ class Config
      */
     public function bootstrap(array $config)
     {
-        return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_BOOTSTRAPS, md5(serialize($config)), $config));
+        return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_BOOTSTRAPS, 'bootstrap', $config));
     }
 
     /**
@@ -176,6 +195,18 @@ class Config
     public function module($id, $config)
     {
         return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_MODULES, $id, $config));
+    }
+
+    /**
+     * Run a callable functions for the defined env when toArray() is called.
+     *
+     * @param callable $fn The function to run, the first argument of the closure is the {{luya\Config}} object.
+     * @return ConfigDefinition
+     * @since 1.0.23
+     */
+    public function callback(callable $fn)
+    {
+        return $this->addDefinition(new ConfigDefinition(ConfigDefinition::GROUP_CALLABLE, false, $fn));
     }
 
     /**
@@ -218,7 +249,7 @@ class Config
     private $_definitions = [];
 
     /**
-     * Add a defintion into the defintions bag.
+     * Add a definition into the definitions bag.
      *
      * @param ConfigDefinition $definition
      * @return ConfigDefinition
@@ -265,12 +296,13 @@ class Config
     /**
      * Export the given configuration as array for certain envs.
      *
-     * @param array $envs A list of environments to export. if nothing is given all enviroments will be returned.
+     * @param array|string $envs A list of environments to export. if nothing is given all enviroments will be returned. A string will be threated as array with 1 entry.
      * @return array The configuration array
      */
-    public function toArray(array $envs = [])
+    public function toArray($envs = [])
     {
         $config = [];
+        $envs = (array) $envs;
         $envs = array_merge($envs, [self::ENV_ALL]);
         foreach ($this->_definitions as $definition) { /** @var ConfigDefinition $definition */
             // validate if current export env is in the list of envs
@@ -291,7 +323,7 @@ class Config
     }
 
     /**
-     * Append a given defintion int othe config
+     * Append a given definition int othe config
      *
      * @param array $config
      * @param ConfigDefinition $definition
@@ -304,6 +336,7 @@ class Config
                     $config[$k] = $v;
                 }
                 break;
+
             case ConfigDefinition::GROUP_COMPONENTS:
                 $this->handleKeyBaseMerge($config, $definition, 'components');
                 break;
@@ -319,11 +352,16 @@ class Config
                 foreach ($definition->getConfig() as $v) {
                     $config['bootstrap'][] = $v;
                 }
+                break;
+
+            case ConfigDefinition::GROUP_CALLABLE:
+                call_user_func($definition->getConfig(), $this);
+            break;
         }
     }
 
     /**
-     * Add a array key based component defintion.
+     * Add a array key based component definition.
      *
      * @param array $config
      * @param ConfigDefinition $definition
@@ -336,11 +374,14 @@ class Config
             $config[$section] = [];
         }
 
+        // array key from definition in order to merge with existing values
+        $key = $definition->getKey();
+
         // if key exists, merge otherwise create key
-        if (isset($config[$section][$definition->getKey()])) {
-            $config[$section][$definition->getKey()] = ArrayHelper::merge($config[$section][$definition->getKey()], $definition->getConfig());
+        if (isset($config[$section][$key])) {
+            $config[$section][$key] = ArrayHelper::merge($config[$section][$key], $definition->getConfig());
         } else {
-            $config[$section][$definition->getKey()] = $definition->getConfig();
+            $config[$section][$key] = $definition->getConfig();
         }
     }
 }

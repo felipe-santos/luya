@@ -1,6 +1,6 @@
-# JWT auth with SPA Applications
+# JWT authentication
 
-> since LUYA admin module version 2.2
+> available since LUYA admin module version 2.2
 
 The LUYA admin provides a basic JWT generator including an out of the box authentification system which can proxy requests trough LUYA Admin Api User and those permission system.
 
@@ -166,6 +166,41 @@ class UserController extends \luya\admin\ngrest\base\Api
 
 If a successfull jwt authentication is made the {{luya\admin\components\Jwt::$identity}} contains the {{luya\admin\components\Jwt::$identityClass}} object implementing {{luya\admin\base\JwtIdentityInterface}}.
 
+## CORS Preflight Request
+
+When working with cross domain requests, each xhr request to the API will make an *option request* or also known as *preflight request*. The {{luya\admin\ngrest\base\Api}} controllers provide an out of the box solution which works for common CRUD operations (add, view, list, edit, delete). When working with custom actions you might need to configure the option request for the given method. Therefore you need to configure the API with the following setup: create an url rule for options request, define the option and make sure the option is available without authentification (its common that option request won't have authentication headers).
+
+Create the url rule for the option request, which defines where the option action should be looked up:
+
+```php
+public $apiRules = [
+    'my-api-name' => [
+        'extraPatterns' => [
+            'OPTIONS index' => 'options',
+        ]
+    ]
+];
+```
+
+The above example will forward all OPTIONS request made to the `my-api-name` API on the index action to the options action. `'OPTIONS index' => 'options'` index is the requested action, and options is the action to forward.
+
+As the options request is forwared to the `options` action we should create this in the controller:
+
+```php
+public function actions()
+{
+    return [
+        'options' => luya\admin\ngrest\base\actions\OptionsAction:class,
+    ];
+}
+```
+
+Now the controller has an options action. In order to ensure that the options action does not required permission add the action name to the {{luya\traits\RestBehaviorsTrait::$authOptional}} array:
+
+```php
+public $authOptional = ['options'];
+```
+
 ## Permissions
 
 A few principals regarding permissions:
@@ -174,3 +209,24 @@ A few principals regarding permissions:
 + If the group of the defined {{luya\admin\components\Jwt::$apiUserEmail}} API user has **no permissions**, only your custom actions are accessible.
 + When accessing NgRest API actions like update, create, list or view (detail) and permission is granted the actions are logged with the configured ApiUser.
 + As permission is proxied trough Api Users, a valid Api User token could access those informations as well.
+
+## User Based CheckAccess
+
+Its a common task to check the permission for a certain user id, whether the user can update/delete an item or not. Thefore the {{luya\admin\base\RestActiveController::checkAccess()}} method can be extended by some JWT user id based actions.
+
+```php
+public function checkAccess($action, $model = null, $params = [])
+{
+    parent::checkAccess($action, $model, $params);
+
+    // see if jwt user performs this action
+    if (Yii::$app->jwt->identity && ($action == 'delete' || $action == 'update')) {
+        // if jwt user id is not equal the models user id, throw forbidden exception.
+        if (Yii::$app->jwt->identity->id != $model->user_id) {
+            throw new ForbiddenHttpException("Unable to delete/update this item due to permission restrictions.");
+        }
+    }
+}
+```
+
+The above method assume that the `$model` has a column with `user_id`, adjust this to match the user id column.

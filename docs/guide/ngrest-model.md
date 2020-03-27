@@ -57,6 +57,28 @@ public function ngRestScopes()
 }
 ```
 
+The primary key column will be auto added to the list scope, in order to hide the ID column set {{luya\admin\ngrest\base\Plugin::$hideInList}} but add the attribute to the list scope:
+
+```php
+public function ngRestAttributeTypes()
+{
+    return [
+        'id' => ['number', 'hideInList' => true],
+    ];
+}
+```
+
+Add to the list of attributes:
+
+```php
+public function ngRestScopes()
+{
+    return [
+        ['list', ['id', /* ... */ ]],
+    ];
+}
+```
+
 #### Delete
 
 To enable a delete button where the user can remove an item from the database table you can configure the delete pointer:
@@ -105,10 +127,10 @@ public function extraFields()
 }
 ```
 
-Now we have an extraField with the name `registeredCount`. When accessing this extra field the getter method `getRegisteredCount()` will execute and the number of users will be returned. In order to get this additional into the CRUD list grid view you have to define the extra field in {{\luya\admin\ngrest\base\NgRestModel::ngrestExtraAttributeTypes()}} like the other not extra attribute fields.
+Now we have an extraField with the name `registeredCount`. When accessing this extra field the getter method `getRegisteredCount()` will execute and the number of users will be returned. In order to get this additional into the CRUD list grid view you have to define the extra field in {{\luya\admin\ngrest\base\NgRestModel::ngRestExtraAttributeTypes()}} like the other not extra attribute fields.
 
 ```php
-public function ngrestExtraAttributeTypes()
+public function ngRestExtraAttributeTypes()
 {
     return [
         'registeredCount' => 'number',
@@ -127,6 +149,21 @@ public function ngRestScopes($)
     ];
 }
 ```
+
+#### Extra Attribute without Value
+
+In certain siutation the extra field is not bound to any data, therefore you can either override the extraFields() method and remove the custom attribute or you can attach the "virtual" attribute to an existing root attribute using `.` notation:
+
+```php
+public function ngRestExtraAttributeTypes()
+{
+     return [
+        'id.indexField' => ['index'],
+    ];
+}
+```
+
+This will use the root attribute id which is present in the view, this can be usefull when using {{luya\admin\ngrest\plugins\Angular}} plugins.
 
 ## Grid list default order/sort
 

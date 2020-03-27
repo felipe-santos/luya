@@ -135,7 +135,7 @@ class ThemeManagerTest extends LuyaWebTestCase
         mkdir(Yii::getAlias('@app/themes/not-readable'), 0200);
         
         try {
-            $themeManager->getThemes();
+            $themeManager->getThemes(true);
         } finally {
             rmdir(Yii::getAlias('@app/themes/not-readable'));
         }
@@ -153,7 +153,7 @@ class ThemeManagerTest extends LuyaWebTestCase
         mkdir(Yii::getAlias('@app/otherThemeLocation/emptyThemeDir'));
     
         try {
-            $themeManager->getThemes();
+            $themeManager->getThemes(true);
         } finally {
             rmdir(Yii::getAlias('@app/otherThemeLocation/emptyThemeDir'));
         }
@@ -170,6 +170,15 @@ class ThemeManagerTest extends LuyaWebTestCase
         $themeConfig = $themeManager->getThemeByBasePath($basePath);
         
         $this->assertEquals("fooTheme", $themeConfig->name);
+    }
+
+    public function testDirectThemeFilePath()
+    {
+        $path = realpath(__DIR__ . '/../../data/themes/blank/theme.json');
+        $manager = new ThemeManager();
+        $config = $manager->loadThemeConfig($path);
+
+        $this->assertSame('blank', $config->name);
     }
     
     public function testAbsoluteThemeDefinition()
@@ -193,6 +202,6 @@ class ThemeManagerTest extends LuyaWebTestCase
         Yii::$app->getPackageInstaller()->getConfigs()['luyadev/luya-core']->setValue('themes', ['@app/themes/blank']);
         
         $themeManager = new ThemeManager();
-        $themeManager->getThemes();
+        $themeManager->getThemes(true);
     }
 }

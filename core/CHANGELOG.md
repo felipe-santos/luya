@@ -3,8 +3,36 @@
 All notable changes to this project will be documented in this file. This project adheres to [Semantic Versioning](http://semver.org/).
 In order to read more about upgrading and BC breaks have a look at the [UPGRADE Document](UPGRADE.md).
 
-## 1.0.23
+## 1.1.1
 
+## 1.1.0 (12. March 2020)
+
++ [Admin#464](https://github.com/luyadev/luya-module-admin/issues/464) The `luya\traits\ApplicationTrait::setLocale()` does not change the `Yii::$app->language` value as before. In order to change the application language use `Yii::$app->language` directly.
++ [#1995](https://github.com/luyadev/luya/issues/1998) The `luya\web\Asset` defines a default `$sourcePath` when value is `null`. The default path is relativ to its file location `<FILE_LOCATION>/resources/<ASSET_NAME>`.
++ [#1993](https://github.com/luyadev/luya/pull/1993) Added new Text to Speech Widget `luya\texttospeech\TextToSpeechWidget`.
++ Added Karma tests to Travis.
+
+## 1.0.26 (20. February 2020)
+
++ [#1987](https://github.com/luyadev/luya/issues/1987) Fix bug with closures in `luya\Config` application and bootstrap section.
+
+## 1.0.25 (7. January 2020)
+
++ [#1982](https://github.com/luyadev/luya/pull/1982) New `PhoneNumberValidator` to validate Phone Numbers and standardized the format.
++ [#1981](https://github.com/luyadev/luya/pull/1981) Add `appendQuery()` and `appendQueryTourl()` function to Url Helper. The append method will add a given key value query param to the current url or any url.
++ [#1986](https://github.com/luyadev/luya/pull/1986) Corrected the event triggering while the theme setup
+
+## 1.0.24 (9. December 2019)
+
++ [#1980](https://github.com/luyadev/luya/pull/1980) Added `ArrayHelper::search()` keys option to search only in certain array keys.
++ [#1969](https://github.com/luyadev/luya/pull/1969) Fixed exception handling while loading empty theme directories.
++ [#1977](https://github.com/luyadev/luya/pull/1977) Added new `ArrayHelper::combine()` method to generate an array with the same keys and values.
++ [#1977](https://github.com/luyadev/luya/pull/1978) Added support for ActiveForm context to SubmitButtonWidget. Supporting multi form (including pjax) on same page.
+
+## 1.0.23 (27. November 2019)
+
++ [#1975](https://github.com/luyadev/luya/pull/1975) Added new luya\Config `callback(fn)` function to run define('YII_DEBUG', true) commands.
++ [#1974](https://github.com/luyadev/luya/issues/1974) Register module components in bootstrap section before run luyaBootstrap method.
 + [#1971](https://github.com/luyadev/luya/issues/1971) Add opcache reset to health command.
 
 ## 1.0.22 (22. October 2019)

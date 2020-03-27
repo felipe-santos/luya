@@ -103,7 +103,7 @@ class TestRestController extends luya\admin\base\RestController
         return ['sheba', 'whiskas'];
     }
 }
-``
+```
 
 Assuming the module name is `pets` the requested routes would be `pets/test-rest/dogs` and `pets/test-rest/cats`
 
@@ -113,13 +113,24 @@ class Pets extends luya\admin\base\Module
      public function extendPermissionRoutes()
      {
          return [
-             ['route' => 'pets/test-rest-dogs', 'alias' => 'Dogs Action',
+             ['route' => 'pets/test-rest-dogs', 'alias' => 'Dogs Action']
          ];
      }
 }
 ```
 
 Now the action route `pets/test-rest/dogs` can only accessed when the user has the certain permission assigned, but `pets/test-rest/cats` can be accessed by any authenticated user. If  {{luya\admin\Module::$apiUserAllowActionsWithoutPermissions}} is enabled, even Api Users could access the endpoint.
+
+In order to turn of the {{luya\admin\Module::$apiUserAllowActionsWithoutPermissions}} apiUser check only for a given controller you might override {{luya\admin\traits::canApiUserAccess()}}.
+
+```php
+public function canApiUserAccess()
+{
+    return true;
+}
+```
+
+Now the given API controller is also accessible to api users.
 
 ### RestActiveController
 
@@ -147,7 +158,7 @@ class TestActiveRestController extends luya\admin\base\ActiveRestController
         return ['sheba', 'whiskas'];
     }
 }
-``
+```
 
 With the following module config:
 
@@ -161,7 +172,7 @@ class Pets extends luya\admin\base\Module
      public function extendPermissionApis()
      {
          return [
-             ['api' => 'my-pets-api', 'alias' => 'Pets API',
+             ['api' => 'my-pets-api', 'alias' => 'Pets API']
          ];
      }
 }
